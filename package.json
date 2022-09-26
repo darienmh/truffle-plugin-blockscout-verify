@@ -1,8 +1,8 @@
 {
   "name": "truffle-plugin-blockscout-verify",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Verify your deployed smart contracts on Blockscout from the Truffle CLI",
-  "repository": "https://github.com/aaitor/truffle-plugin-blockscout-verify",
+  "repository": "https://github.com/darienmh/truffle-plugin-blockscout-verify",
   "main": "verify.js",
   "files": [
     "constants.js",
@@ -11,6 +11,7 @@
     "truffle-plugin.json"
   ],
   "scripts": {
+    "lint": "npx eslint verify.js util.js constants.js test/**",
     "test": "mocha './{,!(node_modules)/**}/*.test.js'"
   },
   "keywords": [
@@ -20,7 +21,7 @@
     "blockscout",
     "verify"
   ],
-  "author": "Aitor & Javi at Celo",
+  "author": "Aitor & Javi at Celo & Darien Macias",
   "license": "Apache Licence V2",
   "dependencies": {
     "@celo/contractkit": "^1.5.2",
@@ -31,12 +32,12 @@
   },
   "devDependencies": {
     "chai": "^4.3.6",
-    "eslint": "^6.1.0",
+    "eslint": "^6.8.0",
     "eslint-config-standard": "^13.0.1",
-    "eslint-plugin-import": "^2.18.2",
-    "eslint-plugin-node": "^9.1.0",
-    "eslint-plugin-promise": "^4.2.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "mocha": "^6.2.1"
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^9.2.0",
+    "eslint-plugin-promise": "^4.3.1",
+    "eslint-plugin-standard": "^4.1.0",
+    "mocha": "^6.2.3"
   }
 }

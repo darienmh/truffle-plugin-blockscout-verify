@@ -4,24 +4,21 @@ const { merge } = require('sol-merger')
 const fs = require('fs')
 const path = require('path')
 const { enforce, enforceOrThrowError, enforceOrThrowWarn } = require('./util')
-const { API_URLS, BLOCKSCOUT_URLS, RequestStatus, VerificationStatus } = require('./constants')
-const { newKit, CeloContract} = require('@celo/contractkit')
+const { RequestStatus, VerificationStatus } = require('./constants')
+const { newKit } = require('@celo/contractkit')
 const kit = newKit('http://localhost:8545')
-
 
 module.exports = async (config) => {
   const options = parseConfig(config)
-  // const kit = newKit.getExchange('http://localhost:8545')
   // Verify each contract
-  contractNames = config._.slice(1)
-
+  let contractNames = config._.slice(1)
 
   // Track which contracts failed verification
   const failedContracts = []
   const notDeployedContracts = []
   const deployedContracts = []
 
-  if (contractNames.includes("all")) {
+  if (contractNames.includes('all')) {
     contractNames = await getAllContractFiles(options.contractsBuildDir)
   }
   for (const contractName of contractNames) {
@@ -33,6 +30,7 @@ module.exports = async (config) => {
         artifact.networks && artifact.networks[`${options.networkId}`] && artifact.networks[`${options.networkId}`].address,
         `No instance of contract ${artifact.contractName} found for network id ${options.networkId} and network name ${options.networkName}\r\n`
       )) {
+        // eslint-disable-next-line no-undef
         status = VerificationStatus.NOT_DEPLOYED
         notDeployedContracts.push(contractName)
         continue
@@ -41,8 +39,8 @@ module.exports = async (config) => {
       const contractAddress = artifact.networks[`${options.networkId}`].address
       const explorerUrl = `${options.blockscoutUrl}/address/${contractAddress}/contracts`
 
-      let verStatus = await checkVerificationStatus(contractAddress, options)
-      if (verStatus === VerificationStatus.ALREADY_VERIFIED)  {
+      const verStatus = await checkVerificationStatus(contractAddress, options)
+      if (verStatus === VerificationStatus.ALREADY_VERIFIED) {
         console.debug(`Contract ${contractName} at address ${contractAddress} already verified. Skipping: ${explorerUrl}`)
       } else {
         console.debug(`Contract ${contractName} at address ${contractAddress} not verified yet. Let's do it.`)
@@ -57,7 +55,6 @@ module.exports = async (config) => {
         }
         console.debug(status)
       }
-      
     } catch (e) {
       console.error(`Error ${e}`)
       failedContracts.push(contractName)
@@ -85,7 +82,7 @@ const parseConfig = (config) => {
   enforce(config._.length > 1, 'No contract name(s) specified')
 
   const workingDir = config.working_directory
-  contractsBuildDir = config.contracts_build_directory
+  let contractsBuildDir = config.contracts_build_directory
 
   if (fs.existsSync(`${workingDir}/build/${networkName}`) && fs.existsSync(`${workingDir}/build/${networkName}/contracts/`)) {
     contractsBuildDir = workingDir + `/build/${networkName}/contracts/`
@@ -97,7 +94,7 @@ const parseConfig = (config) => {
   console.debug(`Working Dir ${workingDir}`)
 
   let optimization = false
-  if (optimizerSettings.enabled == 1) {
+  if (optimizerSettings.enabled.toNumber() === 1) {
     optimization = true
   }
 
@@ -141,12 +138,11 @@ const verifyContract = async (artifact, options) => {
 }
 
 const sendVerifyRequest = async (artifact, options) => {
-  const contractAddress= artifact.networks[`${options.networkId}`].address
+  const contractAddress = artifact.networks[`${options.networkId}`].address
   const encodedConstructorArgs = await fetchConstructorValues(artifact, options)
   const mergedSource = await fetchMergedSource(artifact, options)
   const contractProxyAddress = await getProxyAddress(artifact.contractName)
   console.log(`Contract Proxy address ${contractProxyAddress}`)
-
 
   var postQueries = {
     addressHash: contractAddress,
@@ -158,9 +154,10 @@ const sendVerifyRequest = async (artifact, options) => {
     constructorArguments: encodedConstructorArgs
   }
 
-  if (contractProxyAddress)
-    postQueries["proxyAddress"] = contractProxyAddress
-  
+  if (contractProxyAddress) {
+    postQueries['proxyAddress'] = contractProxyAddress
+  }
+
   // Link libraries as specified in the artifact
   const libraries = artifact.networks[`${options.networkId}`].links || {}
   Object.entries(libraries).forEach(([key, value], i) => {
@@ -189,8 +186,8 @@ const fetchConstructorValues = async (artifact, options) => {
     throw new Error(`Failed Fetching constructor values from Blockscout API at url ${options.apiUrl}`)
   }
   enforceOrThrowError(res.data && res.data.status === RequestStatus.OK, 'Failed to fetch constructor arguments')
-  let constructorParameters= res.data.result[0].input.substring(artifact.bytecode.length)
-  return constructorParameters
+  // constructorParameters
+  return res.data.result[0].input.substring(artifact.bytecode.length)
 }
 
 const fetchMergedSource = async (artifact, options) => {
@@ -210,23 +207,23 @@ const fetchMergedSource = async (artifact, options) => {
 
 const checkVerificationStatus = async (address, options) => {
   // Retry API call every second until status is no longer pending
-  let counter= 0
+  let counter = 0
   const retries = 5
   while (counter < retries) {
-    let url = `${options.apiUrl}?module=contract&action=getsourcecode&address=${address}&ignoreProxy=1`
-    //console.debug(`Retrying contract verification[${counter}] for address ${address} at url: ${url}`)
+    const url = `${options.apiUrl}?module=contract&action=getsourcecode&address=${address}&ignoreProxy=1`
+    // console.debug(`Retrying contract verification[${counter}] for address ${address} at url: ${url}`)
 
     try {
       const result = await axios.get(url)
       if ('SourceCode' in result.data.result[0] && result.data.result[0].SourceCode.length > 0) {
         console.debug(`Contract at ${address} verified`)
-        return  VerificationStatus.ALREADY_VERIFIED
+        return VerificationStatus.ALREADY_VERIFIED
       }
     } catch (e) {
       console.error(`Error in verification status: ${e}`)
       throw new Error(`Failed to get verification status from Blockscout API at url ${options.apiUrl}`)
     }
-    counter++;
+    counter++
     await delay(1000)
   }
   console.debug(`Contract at ${address} source code not verified yet`)
@@ -248,25 +245,26 @@ Object.assign(module.exports, {
 })
 
 const getAllContractFiles = async (contractFolder) => {
-  const contractFiles = fromDir(contractFolder, '.json')
-  return contractFiles
+  // contractFiles
+  return fromDir(contractFolder, '.json')
 }
 
-const fromDir = async(folder, filter) => {
-  filesFiltered = []
+const fromDir = async (folder, filter) => {
+  let filesFiltered = []
   if (!fs.existsSync(folder)) {
     console.error(`Directory ${folder} does not exist. Exiting`)
     return filesFiltered
   }
-  files = fs.readdirSync(folder)
+  const files = fs.readdirSync(folder)
   filesFiltered = []
+  let filename
+  let stat
   for (const f of files) {
     filename = path.join(folder, f)
     stat = fs.lstatSync(filename)
     if (stat.isDirectory()) {
       fromDir(f, filter)
-    }
-    else if (path.parse(f).ext == filter) {
+    } else if (path.parse(f).ext === filter) {
       filesFiltered.push(path.parse(f).name)
     }
   }
